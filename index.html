@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolt — Véhicules éligibles</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9f9f9; color: #1a1a1a; min-height: 100vh; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .header { margin-bottom: 8px; }
+  .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 28px; }
+  .search-wrap { position: relative; margin-bottom: 24px; }
+  .search-wrap input { width: 100%; padding: 12px 16px 12px 44px; font-size: 15px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; color: #1a1a1a; outline: none; transition: border-color 0.2s; }
+  .search-wrap input:focus { border-color: #2A9C64; }
+  .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; opacity: 0.4; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .tab { padding: 8px 16px; font-size: 13px; border: 1px solid #e0e0e0; border-radius: 20px; cursor: pointer; background: #fff; color: #555; transition: all 0.15s; user-select: none; }
+  .tab.active { background: #2A9C64; border-color: #2A9C64; color: #fff; font-weight: 600; }
+  .tab:hover:not(.active) { background: #f0f0f0; border-color: #ccc; }
+  .count-badge { display: inline-block; margin-left: 6px; background: #f0f0f0; color: #888; font-size: 11px; padding: 1px 7px; border-radius: 10px; }
+  .tab.active .count-badge { background: rgba(255,255,255,0.25); color: #fff; }
+  .results-count { font-size: 12px; color: #999; margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+  .vehicle-item { padding: 10px 14px; background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 13px; color: #1a1a1a; }
+  .vehicle-item.highlight { border-color: #2A9C64; background: #f0faf5; }
+  .empty { text-align: center; padding: 60px; color: #aaa; font-size: 14px; grid-column: 1 / -1; }
+  .loading { text-align: center; padding: 60px; color: #aaa; font-size: 14px; }
+  .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e8e8e8; font-size: 12px; color: #aaa; text-align: center; }
+  @media (max-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); } .container { padding: 24px 16px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <img src="https://assets.homepage.bolt.eu/1.22.14/public/common-assets/bolt-logo-black.svg" alt="Bolt" style="height:28px;" onerror="this.outerHTML='<span style=font-size:22px;font-weight:700;color:#1a1a1a>Bolt</span>'">
+      <span style="font-size:15px;color:#aaa;">— Véhicules éligibles</span>
+    </div>
+  </div>
+  <p class="subtitle">Consultez la liste des véhicules éligibles par catégorie</p>
+
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+      <circle cx="6.5" cy="6.5" r="5" stroke="#333" stroke-width="1.5"/>
+      <path d="M10.5 10.5L14 14" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <input type="text" id="search" placeholder="Rechercher un véhicule..." oninput="filterVehicles()">
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="results-count" id="results-count"></div>
+  <div class="grid" id="grid"><div class="loading">Chargement...</div></div>
+
+  <div class="footer">Bolt © 2026 — Liste des véhicules éligibles France</div>
+</div>
+
+<script>
+let data = {};
+let activeTab = '';
+let searchTerm = '';
+
+fetch('vehicles.csv')
+  .then(r => r.text())
+  .then(csv => {
+    const lines = csv.trim().split('\n').slice(1);
+    lines.forEach(line => {
+      const comma = line.indexOf(',');
+      const cat = line.substring(0, comma).trim();
+      const vehicle = line.substring(comma + 1).trim();
+      if (!data[cat]) data[cat] = [];
+      data[cat].push(vehicle);
+    });
+    Object.keys(data).forEach(cat => data[cat].sort());
+    activeTab = Object.keys(data)[0];
+    renderTabs();
+    renderGrid();
+  })
+  .catch(() => {
+    document.getElementById('grid').innerHTML = '<div class="empty">Erreur de chargement du fichier vehicles.csv</div>';
+  });
+
+function renderTabs() {
+  const container = document.getElementById('tabs');
+  container.innerHTML = Object.keys(data).map(cat => {
+    const count = data[cat].length;
+    return `<div class="tab ${cat === activeTab ? 'active' : ''}" onclick="setTab('${cat}')">${cat}<span class="count-badge">${count}</span></div>`;
+  }).join('');
+}
+
+function setTab(cat) {
+  activeTab = cat;
+  renderTabs();
+  renderGrid();
+}
+
+function filterVehicles() {
+  searchTerm = document.getElementById('search').value.toLowerCase();
+  renderGrid();
+}
+
+function renderGrid() {
+  const list = data[activeTab] || [];
+  const filtered = list.filter(v => v.toLowerCase().includes(searchTerm));
+  const grid = document.getElementById('grid');
+  const count = document.getElementById('results-count');
+  count.textContent = filtered.length + ' véhicule' + (filtered.length > 1 ? 's' : '') + ' trouvé' + (filtered.length > 1 ? 's' : '');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty">Aucun véhicule trouvé</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(v => `<div class="vehicle-item ${searchTerm && v.toLowerCase().includes(searchTerm) ? 'highlight' : ''}">${v}</div>`).join('');
+}
+</script>
+</body>
+</html>
