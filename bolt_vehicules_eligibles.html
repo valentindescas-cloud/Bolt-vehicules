@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolt — Véhicules éligibles</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9f9f9; color: #1a1a1a; min-height: 100vh; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .header { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-text { font-size: 22px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 28px; margin-left: 0; }
+  .search-wrap { position: relative; margin-bottom: 24px; }
+  .search-wrap input { width: 100%; padding: 12px 16px 12px 44px; font-size: 15px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; color: #1a1a1a; outline: none; transition: border-color 0.2s; }
+  .search-wrap input:focus { border-color: #2A9C64; }
+  .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; opacity: 0.4; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .tab { padding: 8px 16px; font-size: 13px; border: 1px solid #e0e0e0; border-radius: 20px; cursor: pointer; background: #fff; color: #555; transition: all 0.15s; user-select: none; }
+  .tab.active { background: #2A9C64; border-color: #2A9C64; color: #0C2C1C; font-weight: 600; }
+  .tab:hover:not(.active) { background: #f0f0f0; border-color: #ccc; }
+  .count-badge { display: inline-block; margin-left: 6px; background: #f0f0f0; color: #888; font-size: 11px; padding: 1px 7px; border-radius: 10px; }
+  .tab.active .count-badge { background: rgba(0,0,0,0.1); color: #0C2C1C; }
+  .results-count { font-size: 12px; color: #999; margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+  .vehicle-item { padding: 10px 14px; background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 13px; color: #1a1a1a; transition: border-color 0.15s; }
+  .vehicle-item.highlight { border-color: #2A9C64; background: #e6f4ed; }
+  .empty { text-align: center; padding: 60px; color: #aaa; font-size: 14px; grid-column: 1 / -1; }
+  .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e8e8e8; font-size: 12px; color: #aaa; text-align: center; }
+  @media (max-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); } .container { padding: 24px 16px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <img src="https://assets.homepage.bolt.eu/1.22.14/public/common-assets/bolt-logo-black.svg" alt="Bolt" style="height:28px;">
+      <span style="font-size:15px;color:#aaa;margin-left:4px">— Véhicules éligibles</span>
+    </div>
+  </div>
+  <p class="subtitle">Consultez la liste des véhicules éligibles par catégorie</p>
+
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="6.5" cy="6.5" r="5" stroke="#333" stroke-width="1.5"/>
+      <path d="M10.5 10.5L14 14" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <input type="text" id="search" placeholder="Rechercher un véhicule..." oninput="filterVehicles()">
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="results-count" id="results-count"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="footer">Bolt © 2026 — Liste des véhicules éligibles France</div>
+</div>
+
+<script>
+const data = {
+  "Bolt / Green / Pet / Women": ["AIWAYS U5","Alfa Romeo Junior","Alfa Romeo Stelvio","Alfa Romeo Tonale","Audi A1 Sportback","Audi A3","Audi A3 Limousine","Audi A4","Audi A4 Allroad","Audi A4 Avant","Audi A5","Audi A6","Audi A7","Audi e-tron","Audi e-tron GT","Audi e-tron Sportback","Audi Q2","Audi Q3","Audi Q4 e-tron","Audi Q5","Audi Q5 Sportback","Audi Q6","Audi Q7","Audi Q8","BMW 1 series","BMW 116","BMW 2 series","BMW 2 series Active Tourer","BMW 2 series Gran Tourer","BMW 218","BMW 225","BMW 3 series","BMW 3 series Gran Turismo","BMW 316","BMW 318","BMW 320","BMW 330","BMW 4 series","BMW 4 series Gran Coupé","BMW 5 series","BMW 5 series Gran Turismo","BMW 520","BMW 530","BMW 530e iPerformance","BMW 7 series","BMW 745","BMW i3","BMW i4","BMW i5","BMW i7","BMW iX","BMW iX1","BMW iX2","BMW iX3","BMW iX40","BMW X1","BMW X2","BMW X3","BMW X4","BMW X5","BYD Atto 3","BYD D1","BYD Dolphin","BYD Han","BYD Qin Plus EV","BYD S2","BYD seagull","BYD Seal","BYD Seal 5","BYD Seal 6","BYD Seal U","BYD Sealion 7","BYD Song L DM-i","BYD Song Plus Flagship EV","BYD Tang","Chevrolet Suburban","Chevrolet Volt","Citroen Berlingo","Citroen C3","Citroen C3 Aircross","Citroen C4","Citroen C4 Aircross","Citroen C4 Cactus","Citroen C4 Picasso","Citroen C4 SpaceTourer","Citroen C4 X","Citroen C5","Citroen C5 Aircross","Citroen C5 X","Citroen DS 3","Citroen DS 3 Crossback","Citroen DS 4","Citroen DS 5","Citroen DS 7 Crossback","Citroen ë-C3","Citroen E-C4","Citroen ë-C4","Citroen ë-C4 X","Citroen ë-SpaceTourer","Citroen Grand C4 Picasso","Citroen Grand C4 SpaceTourer","Citroen Jumpy","Citroen Spacetourer","Cupra Born","Cupra Formentor","Cupra León","Cupra Tavascan","Cupra Terramar","Dacia Duster","Dacia Jogger","Dacia Sandero","Dacia Spring","DS 3 Crossback","DS 3 Crossback E-Tense","DS 4","DS 5","DS 7 Crossback","DS 7 Crossback E-Tense","DS 9 E-Tense","Fiat 500X","Fiat 600E","Fiat Panda","Fiat Talento","Fiat Tipo","Fiat Scudo","Fiat Ulysse","Fisker Ocean","Ford C-Max","Ford Capri","Ford Ecosport","Ford Explorer","Ford Fiesta","Ford Focus","Ford Focus Estate","Ford Galaxy","Ford Grand C-Max","Ford Grand Tourneo","Ford Kuga","Ford Mondeo","Ford Mustang Mach-E","Ford Puma","Ford S-Max","Ford Tourneo","Ford Transit","Ford Transit Custom","Ford Transit Connect","Ford Turneo Custom","Honda CR-V","Honda HR-V","Hyundai IONIQ 5","Hyundai IONIQ 6","Hyundai IONIQ 7","Hyundai IONIQ 9","Hyundai Kona","Hyundai Santa Fe","Hyundai SANTAFE","Hyundai Staria","Hyundai Tucson","Infiniti Q70","Jaguar I-Pace","Jaguar XE","Jaguar XF","Kia EV6","Kia EV9","Kia Sorento","Lexus ES","Lexus IS","Lexus NX","Lexus RX","Lexus UX","Mercedes-Benz C-class","Mercedes-Benz E-class","Mercedes-Benz EQA","Mercedes-Benz EQB","Mercedes-Benz EQC","Mercedes-Benz EQE","Mercedes-Benz EQS","Mercedes-Benz EQV","Mercedes-Benz GLA","Mercedes-Benz GLB","Mercedes-Benz GLC","Mercedes-Benz GLE","Mercedes-Benz S-class","Mercedes-Benz V-class","Mercedes-Benz Vito","MG ZS","MG ZS EV","Nissan Ariya","Nissan Leaf","Nissan Qashqai","Nissan X-Trail","Opel Astra","Opel Grandland X","Opel Insignia","Opel Zafira","Peugeot 3008","Peugeot 5008","Peugeot 508","Peugeot e-Traveller","Peugeot Expert","Peugeot Traveller","Polestar 2","Porsche Cayenne","Porsche Macan","Renault Espace","Renault Talisman","Renault Trafic","Skoda Enyaq","Skoda Kodiaq","Skoda Octavia","Skoda Superb","Tesla Model 3","Tesla Model S","Tesla Model X","Tesla Model Y","Toyota C-HR","Toyota Camry","Toyota Highlander","Toyota Prius","Toyota ProAce","Toyota RAV4","Toyota Yaris","Volkswagen Arteon","Volkswagen Caravelle","Volkswagen Golf","Volkswagen ID.4","Volkswagen ID.7","Volkswagen Multivan","Volkswagen Passat","Volkswagen Tiguan","Volkswagen Touran","Volvo S90","Volvo V90","Volvo XC40","Volvo XC60","Volvo XC90","Xpeng G6","Xpeng G9"],
+  "Comfort": ["AIWAYS U5","Alfa Romeo Junior","Alfa Romeo Stelvio","Alfa Romeo Tonale","Audi A4","Audi A4 Allroad","Audi A4 Avant","Audi A5","Audi A6","Audi A7","Audi e-tron","Audi e-tron GT","Audi e-tron Sportback","Audi Q3","Audi Q4 e-tron","Audi Q5","Audi Q5 Sportback","Audi Q6","Audi Q7","Audi Q8","BMW 2 series","BMW 2 series Gran Tourer","BMW 218","BMW 225","BMW 3 series","BMW 3 series Gran Turismo","BMW 316","BMW 318","BMW 320","BMW 330","BMW 4 series","BMW 4 series Gran Coupé","BMW 5 series","BMW 5 series Gran Turismo","BMW 520","BMW 530","BMW 530e iPerformance","BMW 7 series","BMW 745","BMW i4","BMW i5","BMW i7","BMW iX","BMW iX1","BMW iX2","BMW iX3","BMW iX40","BMW X1","BMW X2","BMW X3","BMW X4","BMW X5","BYD D1","BYD Han","BYD Seal","BYD Seal 5","BYD Seal 6","BYD Seal U","BYD Sealion 7","BYD Song L DM-i","BYD Song Plus Flagship EV","BYD Tang","Fisker Ocean","Ford Mustang Mach-E","Ford Explorer","Ford Galaxy","Ford S-Max","Ford Tourneo","Honda CR-V","Hyundai IONIQ 5","Hyundai IONIQ 6","Hyundai IONIQ 7","Hyundai IONIQ 9","Hyundai Santa Fe","Hyundai Staria","Infiniti Q70","Jaguar I-Pace","Jaguar XE","Jaguar XF","Kia EV6","Kia EV9","Kia Sorento","Lexus ES","Lexus IS","Lexus NX","Lexus RX","Lexus UX","Mercedes-Benz C-class","Mercedes-Benz E-class","Mercedes-Benz EQB","Mercedes-Benz EQC","Mercedes-Benz EQE","Mercedes-Benz EQS","Mercedes-Benz EQV","Mercedes-Benz GLB","Mercedes-Benz GLC","Mercedes-Benz GLE","Mercedes-Benz S-class","Mercedes-Benz V-class","Mercedes-Benz Vito","Nissan Ariya","Nissan X-Trail","Peugeot 5008","Peugeot 508","Peugeot e-Traveller","Peugeot Expert","Peugeot Traveller","Polestar 2","Porsche Cayenne","Porsche Macan","Renault Espace","Renault Talisman","Renault Trafic","Skoda Enyaq","Skoda Kodiaq","Skoda Octavia","Skoda Superb","Tesla Model 3","Tesla Model S","Tesla Model X","Tesla Model Y","Toyota Camry","Toyota Highlander","Toyota ProAce","Toyota RAV4","Volkswagen Arteon","Volkswagen Caravelle","Volkswagen ID.4","Volkswagen ID.7","Volkswagen Multivan","Volkswagen Passat","Volkswagen Tiguan","Volvo S90","Volvo XC40","Volvo XC60","Volvo XC90","Xpeng G6","Xpeng G9"],
+  "Premium": ["AIWAYS U5","Alfa Romeo Stelvio","Audi A4","Audi A4 Allroad","Audi A4 Avant","Audi A5","Audi A6","Audi A7","Audi e-tron","Audi e-tron GT","Audi e-tron Sportback","Audi Q5","Audi Q5 Sportback","Audi Q6","Audi Q7","Audi Q8","BMW 3 series","BMW 3 series Gran Turismo","BMW 316","BMW 318","BMW 320","BMW 330","BMW 4 series","BMW 4 series Gran Coupé","BMW 5 series","BMW 5 series Gran Turismo","BMW 520","BMW 530","BMW 530e iPerformance","BMW 7 series","BMW 745","BMW i4","BMW i5","BMW i7","BMW iX","BMW iX2","BMW iX3","BMW iX40","BMW X3","BMW X4","BMW X5","BMW X6","BMW X7","BYD D1","BYD Han","BYD Seal","BYD Seal 5","BYD Seal 6","BYD Seal U","BYD Sealion 7","BYD Song L DM-i","BYD Song Plus Flagship EV","BYD Tang","DS 7 Crossback","DS 7 Crossback E-Tense","DS 9 E-Tense","Fisker Ocean","Ford Mustang Mach-E","Honda CR-V","Hyundai IONIQ 5","Hyundai IONIQ 6","Hyundai IONIQ 7","Hyundai IONIQ 9","Infiniti Q70","Jaguar I-Pace","Jaguar XE","Jaguar XF","Kia EV6","Kia EV6 GT","Kia EV9","Lexus ES","Lexus IS","Lexus NX","Lexus RX","Lexus UX","Mercedes-Benz C-class","Mercedes-Benz E-class","Mercedes-Benz EQB","Mercedes-Benz EQC","Mercedes-Benz EQE","Mercedes-Benz EQS","Mercedes-Benz EQV","Mercedes-Benz GLB","Mercedes-Benz GLC","Mercedes-Benz GLE","Mercedes-Benz S-class","Mercedes-Benz V-class","Mercedes-Benz Vito","Mitsubishi Outlander","Nissan Ariya","Polestar 2","Porsche Cayenne","Porsche Macan","Skoda Enyaq","Tesla Model 3","Tesla Model S","Tesla Model X","Tesla Model Y","Toyota Highlander","Toyota Mirai","Vinfast VF8","Volkswagen Arteon","Volkswagen California","Volkswagen ID.7","Volkswagen Tayron","Volkswagen Transporter Multivan","Volvo S60","Volvo S90","Volvo V60","Volvo V90","Volvo XC60","Volvo XC90","Xpeng G6","Xpeng G9"],
+  "XL": ["BMW 2 series Gran Tourer","BYD Tang","Chevrolet Suburban","Citroen C4 Picasso","Citroen C4 SpaceTourer","Citroen ë-SpaceTourer","Citroen Grand C4 Picasso","Citroen Grand C4 SpaceTourer","Citroen Jumpy","Citroen Spacetourer","Dacia Jogger","Fiat Talento","Fiat Ulysse","Fiat Scudo","Ford Explorer","Ford Grand C-Max","Ford Grand Tourneo","Ford S-Max","Ford Tourneo","Ford Transit","Ford Transit Custom","Ford Transit Connect","Ford Turneo Custom","Hyundai Santa Fe","Hyundai SANTAFE","Hyundai Staria","Kia Sorento","LEVC TX","LEVC TX Vista","Mercedes-Benz E-class Limousine","Mercedes-Benz EQV","Mercedes-Benz EQV 300","Mercedes-Benz eVito Tourer","Mercedes-Benz GLB","Mercedes-Benz V-class","Mercedes-Benz V220","Mercedes-Benz V250","Mercedes-Benz V300","Mercedes-Benz Viano","Mercedes-Benz Vito","Mercedes-Benz Vito 114","Mercedes-Benz Vito 116","Mercedes-Benz Vito 119","Mercedes-Benz Vito 220","Mercedes-Benz VITO TAXI","Mercedes-Benz Vito Tourer","MG HS","Mitsubishi Outlander","Nissan X-Trail","Opel Vivaro","Opel Zafira","Opel Zafira-e","Peugeot 5008","Peugeot e-Traveller","Peugeot Expert","Peugeot Expert Traveller","Peugeot Traveller","Renault Espace","Renault Grand Espace","Renault Grand Scénic","Renault Trafic","Seat Tarraco","Tesla Model X","Toyota Grand Highlander","Toyota Highlander","Toyota Prius Plus","Toyota ProAce","Toyota ProAce City Verso","Toyota ProAce Verso","Volkswagen California","Volkswagen Caravelle","Volkswagen Caddy","Volkswagen Caddy Maxi","Volkswagen ID.Buzz","Volkswagen Kombi","Volkswagen Multivan","Volkswagen Transporter Kombi","Volkswagen Transporter Multivan","Volvo XC90"],
+  "Van": ["Citroen ë-SpaceTourer","Citroen Jumpy","Citroen Spacetourer","Fiat Talento","Fiat Ulysse","Fiat Scudo","Ford Tourneo","Ford Transit","Ford Transit Custom","Ford Transit Connect","Ford Turneo Custom","Hyundai Staria","LEVC TX","LEVC TX Vista","Mercedes-Benz e-Vito","Mercedes-Benz EQV","Mercedes-Benz EQV 300","Mercedes-Benz eVito","Mercedes-Benz eVito Tourer","Mercedes-Benz V-class","Mercedes-Benz V220","Mercedes-Benz V250","Mercedes-Benz V300","Mercedes-Benz Viano","Mercedes-Benz Vito","Mercedes-Benz Vito 114","Mercedes-Benz Vito 116","Mercedes-Benz Vito 119","Mercedes-Benz Vito 220","Mercedes-Benz VITO TAXI","Mercedes-Benz Vito Tourer","Nissan X-Trail","Opel vivaro-e","Opel Zafira","Opel Zafira-e","Peugeot e-Traveller","Peugeot Expert","Peugeot Expert Traveller","Peugeot Traveller","Renault Trafic","Toyota ProAce","Toyota ProAce City Verso","Toyota ProAce Verso","Volkswagen California","Volkswagen Caravelle","Volkswagen Caddy","Volkswagen Caddy Maxi","Volkswagen ID.Buzz","Volkswagen Kombi","Volkswagen Multivan","Volkswagen Transporter Multivan"]
+};
+
+let activeTab = Object.keys(data)[0];
+let searchTerm = '';
+
+function renderTabs() {
+  const container = document.getElementById('tabs');
+  container.innerHTML = Object.keys(data).map(cat => {
+    const count = data[cat].length;
+    return `<div class="tab ${cat === activeTab ? 'active' : ''}" onclick="setTab('${cat}')">${cat}<span class="count-badge">${count}</span></div>`;
+  }).join('');
+}
+
+function setTab(cat) {
+  activeTab = cat;
+  renderTabs();
+  renderGrid();
+}
+
+function filterVehicles() {
+  searchTerm = document.getElementById('search').value.toLowerCase();
+  renderGrid();
+}
+
+function renderGrid() {
+  const list = data[activeTab];
+  const filtered = list.filter(v => v.toLowerCase().includes(searchTerm));
+  const grid = document.getElementById('grid');
+  const count = document.getElementById('results-count');
+  count.textContent = filtered.length + ' véhicule' + (filtered.length > 1 ? 's' : '') + ' trouvé' + (filtered.length > 1 ? 's' : '');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty">Aucun véhicule trouvé</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(v => `<div class="vehicle-item ${searchTerm && v.toLowerCase().includes(searchTerm) ? 'highlight' : ''}">${v}</div>`).join('');
+}
+
+renderTabs();
+renderGrid();
+</script>
+</body>
+</html>
