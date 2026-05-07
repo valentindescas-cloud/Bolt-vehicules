@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolt — Véhicules éligibles</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #34D186;
+    --dark: #1A1A2E;
+    --mid: #6B7280;
+    --light: #F5F5F7;
+    --border: #E5E7EB;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .logo span { color: var(--green); }
+
+  .header-sub {
+    font-size: 14px;
+    color: var(--mid);
+    border-left: 1px solid var(--border);
+    padding-left: 16px;
+    margin-left: 4px;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+
+  .page-sub {
+    font-size: 15px;
+    color: var(--mid);
+    margin-bottom: 28px;
+  }
+
+  .search-wrap {
+    position: relative;
+    margin-bottom: 32px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--mid);
+    font-size: 16px;
+  }
+
+  #searchInput {
+    width: 100%;
+    padding: 14px 16px 14px 44px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #searchInput:focus { border-color: var(--green); }
+
+  .stats {
+    font-size: 13px;
+    color: var(--mid);
+    margin-bottom: 20px;
+  }
+
+  .stats strong { color: var(--dark); }
+
+  /* Category */
+  .category-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+
+  .category-block:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+
+  .category-header {
+    padding: 18px 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+  }
+
+  .category-header:hover { background: #FAFAFA; }
+
+  .cat-left { display: flex; align-items: center; gap: 12px; }
+
+  .cat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+
+  .cat-name {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+
+  .cat-count {
+    font-size: 12px;
+    color: var(--mid);
+    background: var(--light);
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+
+  .cat-chevron {
+    color: var(--mid);
+    font-size: 12px;
+    transition: transform 0.25s;
+  }
+
+  .category-block.open .cat-chevron { transform: rotate(180deg); }
+
+  .brands-container {
+    display: none;
+    padding: 0 24px 20px;
+  }
+
+  .category-block.open .brands-container { display: block; }
+
+  /* Brand */
+  .brand-block { margin-bottom: 4px; }
+
+  .brand-header {
+    padding: 10px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 8px;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .brand-header:hover { background: var(--light); }
+
+  .brand-left { display: flex; align-items: center; gap: 10px; }
+
+  .brand-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .brand-count {
+    font-size: 11px;
+    color: var(--mid);
+  }
+
+  .brand-chevron {
+    color: #CBD5E0;
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+
+  .brand-block.open .brand-chevron { transform: rotate(180deg); }
+
+  .models-list {
+    display: none;
+    padding: 6px 0 6px 24px;
+  }
+
+  .brand-block.open .models-list { display: block; }
+
+  .model-item {
+    padding: 5px 0;
+    font-size: 13px;
+    color: var(--mid);
+    border-bottom: 1px solid #F3F4F6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .model-item:last-child { border-bottom: none; }
+
+  .model-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #CBD5E0;
+    flex-shrink: 0;
+  }
+
+  /* Empty / loading */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--mid);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .highlight {
+    background: #FFF3CD;
+    border-radius: 3px;
+    padding: 0 2px;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 16px 20px; }
+    .container { padding: 24px 16px; }
+    .page-title { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Bolt<span>.</span></div>
+  <div class="header-sub">Véhicules éligibles</div>
+</header>
+
+<div class="container">
+  <h1 class="page-title">Véhicules éligibles</h1>
+  <p class="page-sub">Consultez la liste des véhicules éligibles par catégorie</p>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Rechercher un véhicule ou une marque..." autocomplete="off">
+  </div>
+
+  <div class="stats" id="stats"></div>
+  <div id="content"><div class="empty">Chargement...</div></div>
+</div>
+
+<script>
+let allData = [];
+
+async function loadCSV() {
+  try {
+    const res = await fetch('vehicles.csv');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    parseAndRender(text);
+  } catch (e) {
+    document.getElementById('content').innerHTML =
+      '<div class="empty">Erreur de chargement du fichier vehicles.csv<br><small>' + e.message + '</small></div>';
+  }
+}
+
+function parseAndRender(text) {
+  const lines = text.trim().split('\n');
+  const data = {};
+
+  lines.forEach((line, i) => {
+    if (i === 0) return; // skip header
+    const parts = line.split(',');
+    if (parts.length < 3) return;
+    const cat = parts[0].trim();
+    const brand = parts[1].trim();
+    const model = parts.slice(2).join(',').trim();
+    if (!cat || !brand || !model) return;
+
+    if (!data[cat]) data[cat] = {};
+    if (!data[cat][brand]) data[cat][brand] = [];
+    if (!data[cat][brand].includes(model)) {
+      data[cat][brand].push(model);
+    }
+  });
+
+  allData = data;
+  render(data, '');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function highlight(str, q) {
+  if (!q) return escapeHtml(str);
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return escapeHtml(str).replace(re, '<mark class="highlight">$1</mark>');
+}
+
+function render(data, query) {
+  const q = query.toLowerCase().trim();
+  const content = document.getElementById('content');
+  const stats = document.getElementById('stats');
+
+  let totalVehicles = 0;
+  let html = '';
+
+  const catOrder = ['Bolt / Green / Pet / Women', 'Comfort', 'Premium', 'XL', 'Van'];
+  const cats = catOrder.filter(c => data[c]).concat(Object.keys(data).filter(c => !catOrder.includes(c)));
+
+  cats.forEach(cat => {
+    const brands = data[cat];
+    let catHtml = '';
+    let catCount = 0;
+    let catMatch = !q || cat.toLowerCase().includes(q);
+
+    Object.keys(brands).sort().forEach(brand => {
+      const models = brands[brand];
+      const brandMatch = !q || brand.toLowerCase().includes(q) || catMatch;
+      const matchedModels = models.filter(m =>
+        !q || m.toLowerCase().includes(q) || brand.toLowerCase().includes(q) || cat.toLowerCase().includes(q)
+      );
+
+      if (matchedModels.length === 0 && !brandMatch) return;
+
+      const displayModels = (q && !catMatch && !brand.toLowerCase().includes(q))
+        ? matchedModels
+        : models;
+
+      if (displayModels.length === 0) return;
+
+      catCount += displayModels.length;
+      totalVehicles += displayModels.length;
+
+      const modelsHtml = displayModels.map(m =>
+        `<div class="model-item"><span class="model-dot"></span>${highlight(m, q)}</div>`
+      ).join('');
+
+      const autoOpen = q ? ' open' : '';
+      catHtml += `
+        <div class="brand-block${autoOpen}">
+          <div class="brand-header" onclick="toggleBrand(this)">
+            <div class="brand-left">
+              <span class="brand-name">${highlight(brand, q)}</span>
+              <span class="brand-count">${displayModels.length} modèle${displayModels.length > 1 ? 's' : ''}</span>
+            </div>
+            <span class="brand-chevron">▼</span>
+          </div>
+          <div class="models-list">${modelsHtml}</div>
+        </div>`;
+    });
+
+    if (!catHtml) return;
+
+    const autoOpen = q ? ' open' : '';
+    html += `
+      <div class="category-block${autoOpen}">
+        <div class="category-header" onclick="toggleCat(this)">
+          <div class="cat-left">
+            <span class="cat-dot"></span>
+            <span class="cat-name">${highlight(cat, q)}</span>
+            <span class="cat-count">${catCount} véhicule${catCount > 1 ? 's' : ''}</span>
+          </div>
+          <span class="cat-chevron">▼</span>
+        </div>
+        <div class="brands-container">${catHtml}</div>
+      </div>`;
+  });
+
+  content.innerHTML = html || '<div class="empty">Aucun véhicule trouvé pour « ' + escapeHtml(query) + ' »</div>';
+
+  if (q) {
+    stats.innerHTML = `<strong>${totalVehicles}</strong> véhicule${totalVehicles > 1 ? 's' : ''} trouvé${totalVehicles > 1 ? 's' : ''} pour « ${escapeHtml(query)} »`;
+  } else {
+    stats.innerHTML = `<strong>${totalVehicles}</strong> véhicules au total`;
+  }
+}
+
+function toggleCat(header) {
+  header.closest('.category-block').classList.toggle('open');
+}
+
+function toggleBrand(header) {
+  header.closest('.brand-block').classList.toggle('open');
+}
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  render(allData, this.value);
+});
+
+loadCSV();
+</script>
+</body>
+</html>
